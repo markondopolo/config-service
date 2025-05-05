@@ -1,0 +1,52 @@
+plugins {
+    id 'org.springframework.boot' version '3.4.4' // Match <parent> version in pom.xml
+    id 'io.spring.dependency-management' version '1.1.4' // Latest compatible with Boot 3.x
+    id 'java'
+}
+
+group = 'com.polarbookshop'
+version = '0.0.1-SNAPSHOT'
+description = 'Centralizes the application configuration.'
+sourceCompatibility = '17'
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    set('springCloudVersion', "2024.0.0") // Matches <springCloudVersion> from pom.xml
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.cloud:spring-cloud-config-server'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}" // BOM import
+    }
+}
+
+// Optional: Only include this if you're using `bootBuildImage` to containerize your app
+// You can safely remove this block if not needed
+
+bootBuildImage {
+    builder = "docker.io/paketobuildpacks/builder-jammy-base"
+    imageName = "${project.name}"
+    environment = ["BP_JVM_VERSION": "17"]
+
+    docker {
+        publishRegistry {
+            username = project.findProperty("registryUsername")
+            password = project.findProperty("registryToken")
+            url = project.findProperty("registryUrl")
+        }
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
